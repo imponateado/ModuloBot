@@ -3002,6 +3002,29 @@ local ctx = {
 	MOD_ROLE       = MOD_ROLE,
 	authIds        = authIds,
 	save           = save,
+	timer          = timer,
+	roleColor      = roleColor,
+	quoteTargets   = quoteTargets,
+	envDocs        = envDocs,
+	findKeyInsensitive = findKeyInsensitive,
+	messageCreate  = messageCreate,
+	getLuaEnv      = getLuaEnv,
+	devENV         = devENV,
+	moduleENV      = moduleENV,
+	wrapMessageObject = wrapMessageObject,
+	tokens         = tokens,
+	token_whitelist = token_whitelist,
+	memoryLimitByMember = memoryLimitByMember,
+	addRuntimeLimit = addRuntimeLimit,
+	minutes        = minutes,
+	printf         = printf,
+	getTimerName   = getTimerName,
+	runtimeLimitByMember = runtimeLimitByMember,
+	cmdData        = cmdData,
+	uv_hrtime      = uv_hrtime,
+	test           = test,
+	debugAction    = debugAction,
+	imageHandler   = imageHandler,
 }
 
 local function loadCmd(path, name)
@@ -3033,6 +3056,13 @@ loadCmd("commands/public/remind",    "remind")
 loadCmd("commands/public/report",    "report")
 loadCmd("commands/public/serverinfo","serverinfo")
 loadCmd("commands/public/topic",     "topic")
+loadCmd("commands/public/commu",     "commu")
+loadCmd("commands/public/del",       "del")
+loadCmd("commands/public/exit",      "exit")
+loadCmd("commands/public/refresh",   "refresh")
+loadCmd("commands/public/resetactivity","resetactivity")
+loadCmd("commands/public/devdoc",    "devdoc")
+loadCmd("commands/public/alvo",      "alvo")
 -- staff
 loadCmd("commands/staff/pin",        "pin")
 loadCmd("commands/staff/poll",       "poll")
@@ -3044,6 +3074,14 @@ loadCmd("commands/staff/delgcmd",    "delgcmd")
 loadCmd("commands/staff/emoji",      "emoji")
 loadCmd("commands/staff/galias",     "galias")
 loadCmd("commands/staff/gcmd",       "gcmd")
+loadCmd("commands/staff/mute",       "mute")
+loadCmd("commands/staff/set",        "set")
+loadCmd("commands/staff/here",       "here")
+-- dev
+loadCmd("commands/dev/lua",          "lua")
+-- aliases
+commands["lu"]   = commands["lua"]
+commands["ping"] = commands["conn"]
 
 --[[ Commands ]]--
 	-- Public
@@ -3379,7 +3417,8 @@ loadCmd("commands/staff/gcmd",       "gcmd")
 		})
 	end
 }
-commands["akinator"] = {
+--[[ akinator → DISABLED ]]
+--[[commands["akinator"] = {
 	auth = permissions.public,
 	description = "Starts an Akinator game.",
 	f = function(message, parameters)
@@ -3447,7 +3486,7 @@ commands["akinator"] = {
 			}
 		end
 	end
-}
+}]]
 ]]
 --[[ avatar, coin, color, conn → commands/public/ ]]
 --[[ doc → commands/public/doc.lua ]]
@@ -4196,7 +4235,8 @@ commands["akinator"] = {
 		end
 	end
 }]]
-commands["remind"] = {
+--[[ remind → commands/public/remind.lua ]]
+--[[commands["remind"] = {
 	auth = permissions.public,
 	description = "Sets a reminder. Bot will remind you.",
 	f = function(message, parameters)
@@ -4312,7 +4352,8 @@ commands["remind"] = {
 	end
 }]]
 --[[ rule → commands/public/rule.lua ]]
-commands["serverinfo"] = {
+--[[ serverinfo → commands/public/serverinfo.lua ]]
+--[[commands["serverinfo"] = {
 	auth = permissions.public,
 	description = "Displays fun info about the server.",
 	f = function(message)
@@ -4893,7 +4934,8 @@ local wrapMessageObject = function(message)
 	}
 end
 	-- Developer
-commands["lua"] = {
+--[[ lua → commands/dev/lua.lua ]]
+--[[commands["lua"] = {
 	auth = permissions.is_dev,
 	description = "Loads a Lua code.",
 	f = function(message, parameters, _, isTest, compEnv, command)
@@ -6059,7 +6101,8 @@ commands["lua"] = {
 	end
 }
 	-- Mod]=]
-commands["mute"] = {
+--[[ mute → commands/staff/mute.lua ]]
+--[[commands["mute"] = {
 	auth = permissions.is_mod,
 	description = "Mutes a member.",
 	f = function(message, parameters)
@@ -6102,8 +6145,10 @@ commands["mute"] = {
 			sendError(message, "MUTE", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["set"] = {
+}]]
+
+--[[ set → commands/staff/set.lua ]]
+--[[commands["set"] = {
 	auth = permissions.is_mod,
 	description = "Gives a role to a member.",
 	f = function(message, parameters)
@@ -6160,8 +6205,10 @@ commands["set"] = {
 			sendError(message, "SET", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["here"] = {
+}]]
+
+--[[ here → commands/staff/here.lua ]]
+--[[commands["here"] = {
 	auth = permissions.is_mod,
 	description = "Pings @here.",
 	f = function(message, parameters)
@@ -6172,9 +6219,10 @@ commands["here"] = {
 		message:reply("@here\n<@" .. message.author.id .. "> says... " .. tostring(parameters))
 		message:delete()
 	end
-}
-	-- Freeaccess
-commands["commu"] = {
+}]]
+
+--[[ commu → commands/public/commu.lua ]]
+--[[commands["commu"] = {
 	description = "Creates a new community role.",
 	f = function(message, parameters)
 		local syntax = "Use `!commu community_code`."
@@ -6225,8 +6273,10 @@ commands["commu"] = {
 			sendError(message, "COMMU", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["del"] = {
+}]]
+
+--[[ del → commands/public/del.lua ]]
+--[[commands["del"] = {
 	description = "Delete messages.",
 	f = function(message, parameters)
 		local syntax = "Use `!del from_message_id [total_maps(1:100)]`."
@@ -6245,8 +6295,10 @@ commands["del"] = {
 			sendError(message, "DEL", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["exit"] = {
+}]]
+
+--[[ exit → commands/public/exit.lua ]]
+--[[commands["exit"] = {
 	description = "Ends the bot process.",
 	f = function(message)
 		--save("serverModulesData", modules, false, true)
@@ -6274,8 +6326,10 @@ commands["exit"] = {
 		log("INFO", "Disconnected from '" .. client.user.name .. "'", logColor.red)
 		os.exit()
 	end
-}
-commands["refresh"] = {
+}]]
+
+--[[ refresh → commands/public/refresh.lua ]]
+--[[commands["refresh"] = {
 	description = "Refreshes the bot.",
 	f = function(message)
 		if table.count(activeChannels) > 0 then
@@ -6301,7 +6355,8 @@ commands["refresh"] = {
 		os.execute("luvit bot.lua")
 		os.exit()
 	end
-}
+}]]
+
 --[=[commands["remmodule"] = {
 	description = "Removes a module category.",
 	f = function(message, parameters)
@@ -6377,7 +6432,9 @@ commands["refresh"] = {
 		end
 	end
 }]=]
-commands["resetactivity"] = {
+
+--[[ resetactivity → commands/public/resetactivity.lua ]]
+--[[commands["resetactivity"] = {
 	description = "Resets the monthly activity.",
 	f = function(message, parameters)
 		-- logs the activity before, just in case it's lost
@@ -6393,8 +6450,9 @@ commands["resetactivity"] = {
 
 		message:delete()
 	end
-}
-commands["devdoc"] = {
+}]]
+--[[ devdoc → commands/public/devdoc.lua ]]
+--[[commands["devdoc"] = {
 	auth = permissions.is_dev,
 	description = "Shows Lua API documentation",
 	f = function(message, parameters)
@@ -6516,7 +6574,8 @@ commands["devdoc"] = {
 		})
 	end
 }
-commands["alvo"] = {
+--[[ alvo → commands/public/alvo.lua ]]
+--[[commands["alvo"] = {
 	description = "Sets a USD → BRL target quote (quote notification)",
 	auth = permissions.is_module,
 	f = function(message, parameters)
@@ -6555,10 +6614,11 @@ commands["alvo"] = {
 
 		message:delete()
 	end
-}
+}]]
 
-commands["lu"]=commands["lua"]
-commands["ping"]=commands["conn"]
+--[[ lu, ping → aliases ]]
+--[[commands["lu"]=commands["lua"]
+commands["ping"]=commands["conn"]]]
 
 --[[ Channel Behaviors ]]--
 --[==[
