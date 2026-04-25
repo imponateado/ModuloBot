@@ -7,8 +7,6 @@ return function(ctx)
 	local authIds          = ctx.authIds
 	local sendError        = ctx.sendError
 	local getLuaEnv        = ctx.getLuaEnv
-	local devENV           = ctx.devENV
-	local moduleENV        = ctx.moduleENV
 	local wrapMessageObject = ctx.wrapMessageObject
 	local tokens           = ctx.tokens
 	local token_whitelist  = ctx.token_whitelist
@@ -57,7 +55,7 @@ return function(ctx)
 
 				local guild = message.guild or client:getGuild(channels["guild"])
 				local _ENV = getLuaEnv(not hasAuth)
-				local ENV = (hasAuth and devENV or moduleENV) + _ENV
+				local ENV = (hasAuth and ctx.devENV or ctx.moduleENV) + _ENV
 				if compEnv then
 					-- parameters
 					if not compEnv.parameters then

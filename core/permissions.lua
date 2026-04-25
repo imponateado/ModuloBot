@@ -82,4 +82,6 @@ M.hasPermission = function(permission, member, message)
 	end
 end
 
+M.getRoleOrder = getRoleOrder
+
 return M

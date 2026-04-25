@@ -1942,6 +1942,7 @@ local cmdData = { }
 	!table
 ]]
 local serverActivity = { }
+local quoteTargets = { }
 
 local title = { _id = { } }
 
@@ -2243,6 +2244,7 @@ end
 --[[ hasPermission → core/permissions.lua ]]
 local _perms        = require("core/permissions")
 local hasPermission = _perms.hasPermission
+local getRoleOrder  = _perms.getRoleOrder
 --[[Doc
 	"Converts HTML to Discord Markdown"
 	@str string
@@ -3025,6 +3027,11 @@ local ctx = {
 	test           = test,
 	debugAction    = debugAction,
 	imageHandler   = imageHandler,
+	messageDelete  = messageDelete,
+	profileStruct  = profileStruct,
+	serverActivity = serverActivity,
+	setReminder    = setReminder,
+	splitByChar    = splitByChar,
 }
 
 local function loadCmd(path, name)
@@ -4711,20 +4718,28 @@ end
 
 local retriggerGamesCommands
 
+local function _inPlace(dest, src)
+	for k in next, dest do dest[k] = nil end
+	if src then
+		for k, v in next, src do dest[k] = v end
+	end
+	return dest
+end
+
 --[[ Events ]]--
 client:on("ready", function()
-	modules = {}--TRY_REQUEST("serverModulesData", false, true)
-	globalCommands = TRY_REQUEST("serverGlobalCommands")--json.decode(base64.decode(getDatabase("serverGlobalCommands", true) .. getDatabase("serverGlobalCommands_2", true)))
-	activeChannels = TRY_REQUEST("serverActiveChannels")
-	activeMembers = TRY_REQUEST("serverActiveMembers")
-	memberProfiles = TRY_REQUEST("serverMemberProfiles")
-	cmdData = TRY_REQUEST("serverCommandsData")
-	serverActivity = TRY_REQUEST("serverActivity")
+	_inPlace(modules, {})--TRY_REQUEST("serverModulesData", false, true)
+	_inPlace(globalCommands, TRY_REQUEST("serverGlobalCommands"))--json.decode(base64.decode(getDatabase("serverGlobalCommands", true) .. getDatabase("serverGlobalCommands_2", true)))
+	_inPlace(activeChannels, TRY_REQUEST("serverActiveChannels"))
+	_inPlace(activeMembers, TRY_REQUEST("serverActiveMembers"))
+	_inPlace(memberProfiles, TRY_REQUEST("serverMemberProfiles"))
+	_inPlace(cmdData, TRY_REQUEST("serverCommandsData"))
+	_inPlace(serverActivity, TRY_REQUEST("serverActivity"))
 	db_teamList = {}--TRY_REQUEST("teamList")
 	db_modules = {}--TRY_REQUEST("modules")
 	luaDoc = {}--TRY_REQUEST("luaDoc")
-	reminders = TRY_REQUEST("reminders")
-	quoteTargets = TRY_REQUEST("quoteTargets")
+	_inPlace(reminders, TRY_REQUEST("reminders"))
+	_inPlace(quoteTargets, TRY_REQUEST("quoteTargets"))
 
 	-- Normalize string indexes ^
 	for k, v in next, table.copy(memberProfiles) do
@@ -4859,6 +4874,10 @@ client:on("ready", function()
 		}),
 		__add = meta.__add
 	})
+
+	ctx.devENV   = devENV
+	ctx.moduleENV = moduleENV
+	ctx.MOD_ROLE = MOD_ROLE
 
 	clock:start()
 
@@ -5124,6 +5143,7 @@ messageCreate = function(message, skipChannelActivity)
     return true
 	end
 end
+ctx.messageCreate = messageCreate
 messageDelete = function(message, skipChannelActivity)
 	if not message.guild or (message.guild.id ~= channels["guild"] and message.guild.id ~= '897638804750471169') then return end
 
@@ -5176,6 +5196,7 @@ messageDelete = function(message, skipChannelActivity)
 		channelBehavior["greetings"].f(message)
 	end
 end
+ctx.messageDelete = messageDelete
 local messageUpdate = function(message)
 	if message.channel.id == channels["bridge"] or message.embed then return end
 
