@@ -2960,6 +2960,27 @@ end
 
 local messageCreate, messageDelete, globalCommandCall
 
+--[[ Command context (shared refs passed to extracted command files) ]]--
+local ctx = {
+	client         = client,
+	toDelete       = toDelete,
+	sendError      = sendError,
+	concat         = concat,
+	pairsByIndexes = pairsByIndexes,
+	currency       = currency,
+	polls          = polls,
+}
+
+local function loadCmd(path, name)
+	local m = require(path)
+	commands[name] = type(m) == "function" and m(ctx) or m
+end
+
+loadCmd("commands/public/conn",   "conn")
+loadCmd("commands/public/avatar", "avatar")
+loadCmd("commands/public/color",  "color")
+loadCmd("commands/public/coin",   "coin")
+
 --[[ Commands ]]--
 	-- Public
 --[[commands["a801"] = {
@@ -3363,145 +3384,7 @@ commands["akinator"] = {
 	end
 }
 ]]
-commands["avatar"] = {
-	auth = permissions.public,
-	description = "Displays someone's avatar.",
-	f = function(message, parameters)
-		parameters = not parameters and message.author.id or string.match(parameters, "(%d+)")
-		parameters = parameters and client:getUser(parameters)
-
-		if parameters then
-			local url = parameters.avatarURL .. "?size=2048"
-
-			toDelete[message.id] = message:reply({
-				embed = {
-					color = color.sys,
-					description = "**" .. parameters.name .. "'s avatar: [here](" .. url .. ")**",
-					image = { url = url }
-				}
-			})
-		end
-	end
-}
-commands["coin"] = {
-	auth = permissions.public,
-	description = "Converts a value between currencies.",
-	f = function(message, parameters)
-		if currency.USD then
-			local syntax = "Use `!coin to_currency from_currency amount`."
-
-			if parameters and #parameters > 2 then
-				local available_currencies = "The available currencies are:\n```\n" .. concat(currency, ", ", tostring, nil, nil, pairsByIndexes) .. "```"
-
-				local from, to, amount
-
-				from = string.match(parameters, "^...")
-				if from then
-					from = string.upper(from)
-					if not currency[from] then
-						return sendError(message, "COIN", ":fire: | Invalid from_currency '" .. from .. "'!", available_currencies)
-					end
-				end
-
-				to = string.match(parameters, "[ \n]+(...)[ \n]*")
-				if to then
-					to = string.upper(to)
-					if not currency[to] then
-						return sendError(message, "COIN", ":fire: | Invalid to_currency '" .. to .. "'!", available_currencies)
-					end
-				else
-					to = from
-					from = nil
-				end
-
-				local randomEmoji = ":" .. table.random({ "money_mouth", "money_with_wings", "moneybag" }) .. ":"
-
-				amount = string.match(parameters, "(%d+[%.,]?%d*)$")
-				amount = amount and tonumber((string.gsub(amount, ',', '.', 1))) or 1
-				amount = (amount * currency[to]) / (currency[from] or currency.USD)
-
-				toDelete[message.id] = message:reply({
-					content = "<@!" .. message.author.id .. ">",
-					embed = {
-						color = color.sys,
-						title = randomEmoji .. " " .. (from or "USD") .. " -> " .. to,
-						description = string.format("¤ %.2f", amount)
-					}
-				})
-			else
-				sendError(message, "COIN", "Invalid or missing parameters.", syntax)
-			end
-		else
-			sendError(message, "COIN", "Currency table is loading. Try again later.")
-		end
-	end
-}
-commands["color"] = {
-	auth = permissions.public,
-	description = "Displays a color.",
-	f = function(message, parameters)
-		if parameters and #parameters > 0 then
-			local hex = string.match(parameters, "^0x(%x+)$") or string.match(parameters, "^#?(%x+)$")
-			if tonumber(hex) and #hex > 6 then
-				hex = nil
-			end
-			if not hex then
-				if string.find(parameters, ',') then
-					local m = "(%d+), *(%d+), *(%d+)"
-					local r, g, b = string.match(parameters, "rgb%(" .. m .. "%)")
-					if not r then
-						r, g, b = string.match(parameters, m)
-					end
-					r, g, b = tonumber(r), tonumber(g), tonumber(b)
-
-					parameters = nil
-					if r then
-						r, g, b = math.clamp(r, 0, 255), math.clamp(g, 0, 255), math.clamp(b, 0, 255)
-						parameters = string.format("%02x%02x%02x", r, g, b)
-					end
-				else
-					parameters = string.match(parameters, "^(%d+)$")
-					if parameters then
-						parameters = string.format("%06x", parameters)
-					end
-				end
-			else
-				parameters = hex
-			end
-
-			if not parameters then
-				return sendError(message, "COLOR", "Invalid hexadecimal or RGB code.")
-			end
-
-			local dec = tonumber(parameters, 16)
-
-			local image = "https://www.colorhexa.com/" .. string.format("%06x", dec) .. ".png"
-
-			toDelete[message.id] = message:reply({
-				embed = {
-					color = dec,
-					author = {
-						name = "#" .. string.upper(parameters) .. " <" .. dec .. ">",
-						icon_url = image
-					},
-					image = {
-						url = image
-					}
-				}
-			})
-		else
-			sendError(message, "COLOR", "Invalid or missing parameters.", "Use `!color #hex_code` or `!color rgb(r, g, b)`.")
-		end
-	end
-}
-commands["conn"] = {
-	auth = permissions.public,
-	description = "Checks the BOT ping.",
-	f = function(message, parameters)
-		local m = message:reply("pong")
-		m:setContent("**Ping** : " .. string.format("%.3f", ((m.createdAt - message.createdAt) * 1000)) .. " ms.")
-	end
-}
+--[[ avatar, coin, color, conn → commands/public/ ]]
 commands["doc"] = {
 	auth = permissions.public,
 	description = "Gets information about a specific lua function.",
