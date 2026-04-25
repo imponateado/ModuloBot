@@ -1,6 +1,8 @@
-local db_url = "http://127.0.0.1/"--"https://d-modulo-b-2.000webhostapp.com/"
-local db_path = ("C:/Users/tai/Desktop/discord/server/discorddb.000webhostapp.com" or "../db") .. "/public_html/files/"
-local backup_path = ("C:/Users/tai/Desktop/discord/server/discorddb.000webhostapp.com" or "../db") .. "/public_html/backups/"
+--[[ db_url, db_path, backup_path → core/db.lua ]]
+local _db         = require("core/db")
+local db_url      = _db.db_url
+local db_path     = _db.db_path
+local backup_path = _db.backup_path
 
 local pigEmoji = "\xF0\x9F\x87\xAE\xF0\x9F\x87\xB1"
 
@@ -2107,47 +2109,8 @@ local getCommandTable = function(message, script, content, title, description)
 		url = url -- Embed image
 	}
 end
---[[Doc
-	~
-	"Gets a database content."
-	@fileName string
-	@raw boolean*
-	>table|string
-]]
-local getDatabase = function(fileName, raw, decodeBase64, ignoreDbErr)
-	--do return {} end
-	local head, body = http.request("GET", db_url .. "get.php?k=" .. tokens.discdb .. "&e=json&f=" .. fileName, DB_COOKIES_N_BLAME_INFINITYFREE)
-	--body = string.gsub(body, "%(%(12%)%)", '+')
-
-	--if decodeBase64 then
-	--	body = base64.decode(body)
-	--end
-	local out = body
-	if not raw then
-		out = json.decode(body)
-	end
-
-	if not ignoreDbErr and not body or not out then
-		error("Database issue -> " .. tostring(fileName))
-	end
-
-	return out
-end
-getDatabase = function(fileName, raw, decodeBase64, ignoreDbErr)
-	local file = io.open(db_path ..fileName .. ".json", "r")
-	local content = file:read("*all")
-	file:close()
-
-	if not raw then
-		content = json.decode(content)
-	end
-
-	if not content then
-		error("Database issue -> " .. tostring(fileName))
-	end
-
-	return content
-end
+--[[ getDatabase → core/db.lua ]]
+local getDatabase = _db.getDatabase
 --[[Doc
 	"Gets the Transformice nickname of a member based on its Discord id"
 	@list int
@@ -2489,67 +2452,12 @@ do
 	end
 end
 
---[[Doc
-	~
-	"Saves a database."
-	@fileName string
-	@db table|string
-	>boolean
-]]
-local save = function(fileName, db, raw, encodeBase64)
-	--do return true end
-	db = (raw and tostring(db) or json.encode(db))
-	--if encodeBase64 then
-	--	db = base64.encode(db)
-	--end
-	--db = string.gsub(db, "%+", "((12))")
-
-	local head, body = http.request("POST", db_url .. "set.php?k=" .. tokens.discdb .. "&e=json&f=" .. fileName, DB_COOKIES_N_BLAME_INFINITYFREE--[[{sa
-		{ "Content-Type", "application/x-www-form-urlencoded" }
-	}]], db)
-
-	return body == "true"
-end
-save = function(fileName, db, raw, encodeBase64)
-	db = (raw and tostring(db) or json.encode(db))
-
-	local file = io.open(db_path .. fileName .. ".json", "w+")
-	file:write(db)
-	file:flush()
-	file:close()
-
-	return true
-end
-
-local backupFunction = function(src_folder, dest_folder)
-	-- Ensure the destination folder exists.
-	os.execute("mkdir -p \"" .. dest_folder .. "\"")
-
-	-- Construct and execute the copy command.
-	local command = string.format("cp -r \"%s\"/* \"%s\"/", src_folder, dest_folder)
-	os.execute(command)
-end
-backupFunction = function(src_folder, dest_folder)
-	-- Create destination directory (no error if it already exists)
-	os.execute(string.format('mkdir "%s" 2>nul', dest_folder))
-
-	-- /E  = copy subdirs (including empty ones)
-	-- /R:0 /W:0 = no retries, no wait
-	-- /NFL /NDL = cleaner output (optional)
-	local command = string.format(
-		'robocopy "%s" "%s" /E /R:0 /W:0 /NFL /NDL',
-		src_folder,
-		dest_folder
-	)
-
-	os.execute(command)
-end
+--[[ save, backupFunction → core/db.lua ]]
+local save           = _db.save
+local backupFunction = _db.backupFunction
 
 local saveGlobalCommands = function()
-	--local toJson = base64.encode(json.encode(globalCommands))
-	local _1 = save("serverGlobalCommands", globalCommands)
-	--local _2 = save("serverGlobalCommands_2", string.sub(toJson, 70001), true)
-	return _1--, _2
+	return save("serverGlobalCommands", globalCommands)
 end
 --[[Doc
 	~
@@ -7704,20 +7612,8 @@ do
 	end
 end
 
-local TRY_REQUEST = function(db, arg1, arg2)
-	local tentatives, content = 0
-	repeat
-		tentatives = tentatives + 1
-		content = getDatabase(db, arg1, arg2, true)
-	until content or tentatives > 10
-
-	if not content then
-		os.execute("luvit bot.lua")
-		error("Database issue -> " .. db)
-	end
-
-	return content
-end
+--[[ TRY_REQUEST → core/db.lua ]]
+local TRY_REQUEST = _db.TRY_REQUEST
 
 local wrapF = function(f)
 	return function(...)
