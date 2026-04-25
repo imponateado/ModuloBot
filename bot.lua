@@ -2967,6 +2967,7 @@ local ctx = {
 	sendError      = sendError,
 	concat         = concat,
 	pairsByIndexes = pairsByIndexes,
+	encodeUrl      = encodeUrl,
 	currency       = currency,
 	polls          = polls,
 }
@@ -2976,10 +2977,19 @@ local function loadCmd(path, name)
 	commands[name] = type(m) == "function" and m(ctx) or m
 end
 
-loadCmd("commands/public/conn",   "conn")
-loadCmd("commands/public/avatar", "avatar")
-loadCmd("commands/public/color",  "color")
-loadCmd("commands/public/coin",   "coin")
+-- public
+loadCmd("commands/public/conn",      "conn")
+loadCmd("commands/public/avatar",    "avatar")
+loadCmd("commands/public/color",     "color")
+loadCmd("commands/public/coin",      "coin")
+loadCmd("commands/public/invite",    "invite")
+loadCmd("commands/public/mobile",    "mobile")
+loadCmd("commands/public/rule",      "rule")
+loadCmd("commands/public/tex",       "tex")
+loadCmd("commands/public/timezone",  "timezone")
+loadCmd("commands/public/translate", "translate")
+-- staff
+loadCmd("commands/staff/pin",        "pin")
 
 --[[ Commands ]]--
 	-- Public
@@ -3688,13 +3698,7 @@ commands["help"] = {
 		end
 	end
 }
-commands["invite"] = {
-	auth = permissions.public,
-	description = "The invite link for this server.",
-	f = function(message)
-		toDelete[message.id] = message:reply("Invite link: **<https://discord.gg/quch83R>**")
-	end
-}
+--[[ invite → commands/public/invite.lua ]]
 commands["list"] = {
 	auth = permissions.public,
 	description = "Lists the users with a specific role.",
@@ -3781,53 +3785,7 @@ commands["list"] = {
 		end
 	end
 }
-commands["mobile"] = {
-	auth = permissions.public,
-	description = "Sends a private message with the embed in a text format.",
-	f = function(message, parameters)
-		parameters = parameters and string.match(parameters, "%d+")
-
-		if parameters then
-			local msg = message.channel:getMessage(parameters)
-
-			if msg then
-				if msg.embed then
-					local content = { }
-
-					if msg.content and #msg.content > 3 then
-						content[#content + 1] = "`" .. msg.content .. "`"
-					end
-
-					if msg.embed.title then
-						content[#content + 1] = "**" .. msg.embed.title .. "**"
-					end
-					if msg.embed.description then
-						content[#content + 1] = msg.embed.description
-					end
-
-					local footerText = msg.embed.footer and msg.embed.footer.text
-					if footerText then
-						content[#content + 1] = "`" .. footerText .. "`"
-					end
-
-					local len = #content
-					content[len + (footerText and 0 or 1)] = (footerText and (content[len] .. " | ") or "") .. "`" .. os.date("%c", os.time(discordia.Date().fromISO(msg.timestamp):toTableUTC())) .. "`"
-
-					local img = (msg.attachment and msg.attachment.url) or (msg.embed and msg.embed.image and msg.embed.image.url)
-					message.author:send({
-						content = string.sub(table.concat(content, "\n"), 1, 2000),
-						embed = {
-							image = (img and { url = img } or nil)
-						}
-					})
-				else
-					message.author:send(msg.content)
-				end
-				message:delete()
-			end
-		end
-	end
-}
+--[[ mobile → commands/public/mobile.lua ]]
 --[=[commands["modules"] = {
 	auth = permissions.public,
 	description = "Lists the current modules available in Transformice. [by name | from community | level 0/1/2 | #pattern]",
@@ -4286,40 +4244,7 @@ commands["report"] = {
 		end
 	end
 }
-commands["rule"] = {
-	auth = permissions.public,
-	description = "Quotes a server rule.",
-	f = function(message, parameters)
-		-- Command by Tocutoeltuco
-		local sec, rule = string.match(tostring(parameters), "\xC2?\xA7?(%d-)%.(%d-%.?%d*)")
-		if not parameters or not sec then
-			return sendError(message, "RULE", "Invalid or missing parameters", "Use `!rule section.rule` or `!rule section.rule.subrule`.")
-		end
-
-		local rules = client:getChannel("491723107728621578"):getMessage("575849365608857600").content .. "\n\n" -- Rules
-		local sec_name, content = string.match(rules, "§" .. sec .. " __(.-)__ %- [`*]+[^`]+[`*\n]+(.-)\n\n")
-
-		if not sec_name then
-			return sendError(message, "RULE", "Invalid section", "The section **" .. sec .. "** does not exist.")
-		end
-
-		local _rule_content = string.match(content, rule .. "%) (.+)")
-
-		if not _rule_content then
-			return sendError(message, "RULE", "Invalid rule", "The rule **" .. sec .. "." .. rule .. "** does not exist.")
-		end
-
-		local rule_content = string.match(_rule_content, "(.+)[\n ]-" .. (math.floor(tonumber(rule)) + 1) .. "%)")
-
-		toDelete[message.id] = message:reply({
-			embed = {
-				color = color.moderation ,
-				title = "<:rule:586043498537418757> " .. sec_name .. " - §" .. sec .. "." .. rule,
-				description = (rule_content or _rule_content)
-			}
-		})
-	end
-}
+--[[ rule → commands/public/rule.lua ]]
 commands["serverinfo"] = {
 	auth = permissions.public,
 	description = "Displays fun info about the server.",
@@ -4409,24 +4334,7 @@ commands["serverinfo"] = {
 		})
 	end
 }
-commands["tex"] = {
-	auth = permissions.public,
-	description = "Displays a mathematical formula using LaTex syntax.",
-	f = function(message, parameters)
-		if parameters and #parameters > 0 then
-			local head, body = http.request("POST", "https://quicklatex.com/latex3.f", nil, "formula=" .. encodeUrl("\\displaystyle " .. parameters) .. "&fsize=21px&fcolor=c2c2c2&out=1&preamble=\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{amssymb}")
-			body = string.match(body, "(http%S+)")
-			if body then
-				body = string.gsub(body, "http:", "https:", 1)
-				toDelete[message.id] = message:reply({ file = tostring(imageHandler.fromUrl(body)) })
-			else
-				sendError(message, "TEX", "Internal Error.", "Try again later.")
-			end
-		else
-			sendError(message, "TEX", "Invalid or missing parameters.", "Use `!tex latex_formula`.")
-		end
-	end
-}
+--[[ tex → commands/public/tex.lua ]]
 --[=[commands["tfmprofile"] = {
 	auth = permissions.public,
 	description = "Displays your profile on Transformice.",
@@ -4485,38 +4393,7 @@ commands["tex"] = {
 		end
 	end
 }]=]
-commands["timezone"] = {
-	auth = permissions.public,
-	description = "Displays the timezone of a country.",
-	f = function(message, parameters, _, toReturn)
-		if parameters and #parameters == 2 then
-			parameters = string.upper(parameters)
-
-			local head, body = http.request("GET", "https://pastebin.com/raw/di8TMeeG") -- https://pastebin.com/raw/zJYbD25i
-			if body then
-				body = load("return " .. body)()
-				if not body[parameters] then
-					return sendError(message, "TIMEZONE", "Country code not found", "Couldn't find '" .. parameters .. "'")
-				end
-
-				if toReturn then
-					return body[parameters]
-				end
-				toDelete[message.id] = message:reply({
-					embed = {
-						color = color.sys,
-						title = body[parameters][1].country,
-						description = concat(body[parameters], "\n", function(index, value)
-							return index .. " - **" .. value.zone .. "** - " .. os.date("%H:%M:%S `%d/%m/%Y`", os.time() + ((value.utc or 0) * 3600))
-						end, nil, nil, ipairs)
-					}
-				})
-			end
-		else
-			sendError(message, "TIMEZONE", "Invalid or missing parameters.", "Use `!timezone country_code`.")
-		end
-	end
-}
+--[[ timezone → commands/public/timezone.lua ]]
 commands["topic"] = {
 	auth = permissions.public,
 	description = "Displays a forum message.",
@@ -4674,61 +4551,7 @@ commands["topic"] = {
 		toDelete[message.id] = msgs
 	end
 }]=]
-commands["translate"] = {
-	auth = permissions.public,
-	description = "Translates a sentence using Google Translate. Professional translations: <@&494665355327832064>",
-	f = function(message, parameters)
-		local syntax = "Use `!translate [from_language-]to_language sentence`."
-
-		if parameters and #parameters > 0 then
-			local language, content = string.match(parameters, "(%S+)[ \n]+(.+)$")
-			if language and content and #content > 0 then
-				if #content == 18 and tonumber(content) then
-					local msgContent = message.channel:getMessage(content)
-					if msgContent then
-						msgContent = msgContent.content or (msgContent.embed and msgContent.embed.description)
-						content = (msgContent and (string.gsub(msgContent, '`', '')) or content)
-					end
-				end
-
-				language = string.lower(language)
-				local sourceLanguage, targetLanguage = string.match(language, "^(..)[%-~]>?(..)$")
-				if not sourceLanguage then
-					sourceLanguage = "auto"
-					targetLanguage = language
-				end
-
-				content = string.sub(content, 1, 250)
-				local head, body = http.request("GET", "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" .. sourceLanguage .. "&tl=" .. targetLanguage .. "&dt=t&q=" .. encodeUrl(content), { { "User-Agent","Mozilla/5.0" } })
-				body = json.decode(tostring(body))
-
-				if body and #body > 0 then
-					sourceLanguage = string.upper((sourceLanguage == "auto" and tostring(body[3]) or sourceLanguage))
-					targetLanguage = string.upper(targetLanguage)
-
-					sourceLanguage = countryFlags_Aliases[sourceLanguage] or sourceLanguage
-					targetLanguage = countryFlags_Aliases[targetLanguage] or targetLanguage
-
-					toDelete[message.id] = message:reply({
-						embed = {
-							color = color.interaction,
-							title = ":earth_americas: Quick Translation",
-							description = (countryFlags[countryFlags_Aliases[sourceLanguage] or sourceLanguage] or "") .. "@**" .. sourceLanguage .. "**\n```\n" .. content .. "```" .. (countryFlags[countryFlags_Aliases[targetLanguage] or targetLanguage] or "") .. "@**" .. string.upper(targetLanguage) .. "**\n```\n" .. concat(body[1], ' ', function(index, value)
-								return value[1]
-							end) .. "```"
-						}
-					})
-				else
-					sendError(message, "TRANSLATE", "Internal Error.", "Couldn't translate ```\n" .. parameters .. "```")
-				end
-			else
-				sendError(message, "TRANSLATE", "Invalid parameters.", syntax)
-			end
-		else
-			sendError(message, "TRANSLATE", "Missing parameters.", syntax)
-		end
-	end
-}
+--[[ translate → commands/public/translate.lua ]]
 --[=[commands["xml"] = {
 	auth = permissions.public,
 	description = "Displays a map based on the XML.",
@@ -4773,33 +4596,7 @@ commands["translate"] = {
 	end,
 }
 	-- Not public]=]
-commands["pin"] = {
-	auth = permissions.has_power,
-	description = "Pins or Unpins a message in an #prj channel.",
-	f = function(message, parameters, category)
-		if not string.find(string.lower(message.channel.name), "^prj_") then
-			return sendError(message, "PIN", "This command cannot be used in this channel.")
-		end
-
-		local syntax = "Use `!pin message_id`."
-
-		if parameters and #parameters > 0 then
-			local msg = message.channel:getMessage(parameters)
-			if msg then
-				if msg.pinned then
-					msg:unpin()
-				else
-					msg:pin()
-				end
-				message:delete()
-			else
-				sendError(message, "PIN", "Message not found.", "Use a valid message id on this channel.\n" .. syntax)
-			end
-		else
-			sendError(message, "PIN", "Invalid or missing parameters.", syntax)
-		end
-	end
-}
+--[[ pin → commands/staff/pin.lua ]]
 commands["poll"] = {
 	auth = permissions.has_power,
 	description = "Creates a poll.",
