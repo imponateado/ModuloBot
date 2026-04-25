@@ -2970,6 +2970,38 @@ local ctx = {
 	encodeUrl      = encodeUrl,
 	currency       = currency,
 	polls          = polls,
+	sortActivityTable = sortActivityTable,
+	activeChannels = activeChannels,
+	activeMembers  = activeMembers,
+	getRate        = getRate,
+	color          = color,
+	memberProfiles = memberProfiles,
+	getAge         = getAge,
+	hasPermission  = hasPermission,
+	getRoleOrder   = getRoleOrder,
+	permIcons      = permIcons,
+	roles          = roles,
+	roleFlags      = roleFlags,
+	globalCommands = globalCommands,
+	communities    = communities,
+	normalizeDiscriminator = normalizeDiscriminator,
+	splitByLine    = splitByLine,
+	luaDoc         = luaDoc,
+	commands       = commands,
+	buildMessage   = buildMessage,
+	reactions      = reactions,
+	channels       = channels,
+	binBase64      = binBase64,
+	htmlToMarkdown = htmlToMarkdown,
+	getCommandFormat = getCommandFormat,
+	getCommandTable = getCommandTable,
+	modules        = modules,
+	saveGlobalCommands = saveGlobalCommands,
+	setPermissions = setPermissions,
+	permissionOverwrites = permissionOverwrites,
+	MOD_ROLE       = MOD_ROLE,
+	authIds        = authIds,
+	save           = save,
 }
 
 local function loadCmd(path, name)
@@ -2988,8 +3020,30 @@ loadCmd("commands/public/rule",      "rule")
 loadCmd("commands/public/tex",       "tex")
 loadCmd("commands/public/timezone",  "timezone")
 loadCmd("commands/public/translate", "translate")
+loadCmd("commands/public/activity",  "activity")
+loadCmd("commands/public/doc",       "doc")
+loadCmd("commands/public/edit",      "edit")
+loadCmd("commands/public/ghelp",     "ghelp")
+loadCmd("commands/public/help",      "help")
+loadCmd("commands/public/list",      "list")
+loadCmd("commands/public/nick",      "nick")
+loadCmd("commands/public/profile",   "profile")
+loadCmd("commands/public/quote",     "quote")
+loadCmd("commands/public/remind",    "remind")
+loadCmd("commands/public/report",    "report")
+loadCmd("commands/public/serverinfo","serverinfo")
+loadCmd("commands/public/topic",     "topic")
 -- staff
 loadCmd("commands/staff/pin",        "pin")
+loadCmd("commands/staff/poll",       "poll")
+loadCmd("commands/staff/resign",     "resign")
+loadCmd("commands/staff/prefix",     "prefix")
+loadCmd("commands/staff/public",     "public")
+loadCmd("commands/staff/staff",      "staff")
+loadCmd("commands/staff/delgcmd",    "delgcmd")
+loadCmd("commands/staff/emoji",      "emoji")
+loadCmd("commands/staff/galias",     "galias")
+loadCmd("commands/staff/gcmd",       "gcmd")
 
 --[[ Commands ]]--
 	-- Public
@@ -3125,7 +3179,8 @@ loadCmd("commands/staff/pin",        "pin")
 		end
 	end
 }]]
-commands["activity"] = {
+--[[ activity → commands/public/activity.lua ]]
+--[[commands["activity"] = {
 	auth = permissions.public,
 	description = "Displays the channels' and members' activity.",
 	f = function(message, _, __, ___, get)
@@ -3166,7 +3221,7 @@ commands["activity"] = {
 			}
 		})
 	end
-}
+}]]
 --[[commands["adoc"] = {
 	auth = permissions.public,
 	description = "Gets information about a specific tfm api function.",
@@ -3395,7 +3450,8 @@ commands["akinator"] = {
 }
 ]]
 --[[ avatar, coin, color, conn → commands/public/ ]]
-commands["doc"] = {
+--[[ doc → commands/public/doc.lua ]]
+--[[commands["doc"] = {
 	auth = permissions.public,
 	description = "Gets information about a specific lua function.",
 	f = function(message, parameters)
@@ -3465,8 +3521,10 @@ commands["doc"] = {
 			sendError(message, "DOC", "Invalid or missing parameters.", "Use `!doc function_name`.")
 		end
 	end
-}
-commands["edit"] = {
+}]]
+
+--[[ edit → commands/public/edit.lua ]]
+--[[commands["edit"] = {
 	auth = permissions.public,
 	description = "Edits the data of your profile.",
 	f = function(message, parameters)
@@ -3586,14 +3644,18 @@ commands["edit"] = {
 			sendError(message, "EDIT", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["ghelp"] = {
+}]]
+
+--[[ ghelp → commands/public/ghelp.lua ]]
+--[[commands["ghelp"] = {
 	auth = permissions.public,
 	f = function(message, parameters)
 		commands["help"].f(message, parameters, nil, globalCommands)
 	end
-}
-commands["help"] = {
+}]]
+
+--[[ help → commands/public/help.lua ]]
+--[[commands["help"] = {
 	auth = permissions.public,
 	f = function(message, parameters, category, cmdSrc)
 		local hasFilter = not not parameters
@@ -3699,7 +3761,8 @@ commands["help"] = {
 	end
 }
 --[[ invite → commands/public/invite.lua ]]
-commands["list"] = {
+--[[ list → commands/public/list.lua ]]
+--[[commands["list"] = {
 	auth = permissions.public,
 	description = "Lists the users with a specific role.",
 	f = function(message, parameters)
@@ -3784,7 +3847,7 @@ commands["list"] = {
 			sendError(message, "LIST", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
+}]]
 --[[ mobile → commands/public/mobile.lua ]]
 --[=[commands["modules"] = {
 	auth = permissions.public,
@@ -3892,7 +3955,8 @@ commands["list"] = {
 		end
 	end
 }]=]
-commands["nick"] = {
+--[[ nick → commands/public/nick.lua ]]
+--[[commands["nick"] = {
 	auth = permissions.public,
 	description = "Changes your nickname in the server. (Blessed command for mobile users)",
 	f = function(message, parameters)
@@ -3901,8 +3965,9 @@ commands["nick"] = {
 			message:delete()
 		end
 	end
-}
-commands["profile"] = {
+}]]
+--[[ profile → commands/public/profile.lua ]]
+--[[commands["profile"] = {
 	auth = permissions.public,
 	description = "Displays the profile of a member.",
 	f = function(message, parameters)
@@ -4093,7 +4158,7 @@ commands["profile"] = {
 
 				thumbnail = { url = p.discord.avatarURL },
 
-				title = (p.data.gender and (p.data.gender == 0 and "<:male:456193580155928588> " or "<:female:456193579308679169> ") or "") .. p.discord.name .. icon,
+				title = (p.data.gender and (p.data.gender == 0 and "<:male:456193580155928588> " or "<:female:456193580155928588> ") or "") .. p.discord.name .. icon,
 
 				description = (p.data.status and "`“" .. p.data.status .. "”` - " or "") .. "<@" .. p.discord.id .. ">",
 
@@ -4101,8 +4166,9 @@ commands["profile"] = {
 			}
 		})
 	end
-}
-commands["quote"] = {
+}]]
+--[[ quote → commands/public/quote.lua ]]
+--[[commands["quote"] = {
 	auth = permissions.public,
 	description = "Quotes an old message.",
 	f = function(message, parameters)
@@ -4129,7 +4195,7 @@ commands["quote"] = {
 			sendError(message, "QUOTE", "Invalid or missing parameters.", "Use `!quote [channel_id-]message_id`.")
 		end
 	end
-}
+}]]
 commands["remind"] = {
 	auth = permissions.public,
 	description = "Sets a reminder. Bot will remind you.",
@@ -4205,7 +4271,8 @@ commands["remind"] = {
 		-- message:delete()
 	end
 }
-commands["report"] = {
+--[[ report → commands/public/report.lua ]]
+--[[commands["report"] = {
 	auth = permissions.public,
 	description = "Reports a message.",
 	f = function(message, parameters)
@@ -4243,7 +4310,7 @@ commands["report"] = {
 			message.author:send({ embed = { color = color.err, title = "<:ban:504779866919403520> Report", description = "Invalid or missing parameters. " .. syntax } })
 		end
 	end
-}
+}]]
 --[[ rule → commands/public/rule.lua ]]
 commands["serverinfo"] = {
 	auth = permissions.public,
@@ -4394,7 +4461,8 @@ commands["serverinfo"] = {
 	end
 }]=]
 --[[ timezone → commands/public/timezone.lua ]]
-commands["topic"] = {
+--[[ topic → commands/public/topic.lua ]]
+--[[commands["topic"] = {
 	auth = permissions.public,
 	description = "Displays a forum message.",
 	f = function(message, parameters)
@@ -4470,7 +4538,7 @@ commands["topic"] = {
 			return sendError(message, "TOPIC", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
+}]]
 --[=[commands["tree"] = {
 	auth = permissions.public,
 	description = "Displays the Lua tree.",
@@ -4597,7 +4665,8 @@ commands["topic"] = {
 }
 	-- Not public]=]
 --[[ pin → commands/staff/pin.lua ]]
-commands["poll"] = {
+--[[ poll → commands/staff/poll.lua ]]
+--[[commands["poll"] = {
 	auth = permissions.has_power,
 	description = "Creates a poll.",
 	f = function(message, parameters)
@@ -4661,91 +4730,10 @@ commands["poll"] = {
 			sendError(message, "POLL", "Invalid or missing parameters.", "Use `!poll question` or `!poll ```question``` poll_time` ` `poll_option_1` ` ` ` ` `poll_option_2` ` ` `.")
 		end
 	end
-}
---[[commands["prj"] = {
-	auth = permissions.has_power,
-	description = "Creates a new channel to discuss about a new project. [- means delete]",
-	f = function(message, parameters)
-		if not categories[message.channel.category.id] then
-			return sendError(message, "PRJ", "This command cannot be used in this category.")
-		end
-
-		local syntax = "Use `!prj project_name(3+ characters) @member @member ...` or `!prj @member @member ...` or `!prj - [@member ...]`."
-
-		if parameters and #parameters > 0 then
-			local p = string.split(parameters, "[^\n ]+")
-			local isPrj = string.find(string.lower(message.channel.name), "^prj_")
-
-			if p[1] then
-				local del = p[1] == '-'
-				local addUser = ((string.find(p[1], "^<") or isPrj) and not del) and 1 or 2
-
-				local members, counter, selfAdded = { }, 0, false
-				if p[addUser] then
-					for i = addUser, #p do
-						local member = string.match(p[i], "<@!?(%d+)>")
-						if member then
-							counter = counter + 1
-							if member ~= message.member.id then
-								members[counter] = message.guild:getMember(member)
-							else
-								members[counter] = message.member
-								selfAdded = true
-							end
-						else
-							return sendError(message, "PRJ", "Invalid parameter.", "`" .. tostring(p[i]) .. "` is not a member.")
-						end
-					end
-				end
-				if not del and not selfAdded then
-					counter = counter + 1
-					members[counter] = message.member
-				end
-
-				if del or addUser == 1 then
-					if not isPrj then
-						return sendError(message, "PRJ", "This command cannot be used in this channel.")
-					end
-
-					if del then
-						if p[2] then -- Del user(s)
-							for member = 1, counter do
-								message.channel:getPermissionOverwriteFor(members[member]):delete()
-							end
-						else -- Del channel
-							message.channel:delete()
-						end
-					else -- Add user(s)
-						for member = 1, counter do
-							message.channel:getPermissionOverwriteFor(members[member]):allowPermissions(table.unpack(permissionOverwrites.prj.allowed))
-						end
-					end
-				else
-					if #p[1] < 3 then
-						return sendError(message, "PRJ", "Invalid event name.", "A project name must have 3 characters or more.")
-					end
-
-					local channel = message.guild:createTextChannel("prj_" .. p[1])
-					channel:setCategory(message.channel.category.id)
-
-					-- Can't read
-					channel:getPermissionOverwriteFor(message.guild.defaultRole):denyPermissions(table.unpack(permissionOverwrites.prj.denied))
-
-					for member = 1, counter do
-						-- Can read
-						channel:getPermissionOverwriteFor(members[member]):allowPermissions(table.unpack(permissionOverwrites.prj.allowed))
-					end
-					message:delete()
-				end
-			else
-				sendError(message, "PRJ", "Missing parameters.", syntax)
-			end
-		else
-			sendError(message, "PRJ", "Invalid or missing parameters.", syntax)
-		end
-	end
 }]]
-commands["resign"] = {
+
+--[[ resign → commands/staff/resign.lua ]]
+--[[commands["resign"] = {
 	auth = permissions.has_power,
 	description = "Leaves a team/role.",
 	f = function(message, parameters)
@@ -4802,7 +4790,7 @@ commands["resign"] = {
 		client:getChannel(channels["role-log"]):send(msg)
 		message:delete()
 	end
-}
+}]]
 	-- Module staff
 --[=[commands["cmd"] = {
 	auth = permissions.is_staff,
@@ -5539,7 +5527,8 @@ commands["lua"] = {
 		end
 	end
 }
-commands["prefix"] = {
+--[[ prefix → commands/staff/prefix.lua ]]
+--[[commands["prefix"] = {
 	auth = permissions.is_owner,
 	description = "Sets the prefix used for the commands of the #module category.",
 	f = function(message, parameters, category)
@@ -5562,8 +5551,10 @@ commands["prefix"] = {
 			sendError(message, "PREFIX", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["public"] = {
+}]]
+
+--[[ public → commands/staff/public.lua ]]
+--[[commands["public"] = {
 	auth = permissions.is_owner,
 	description = "Creates a public role and a public channel for the #module.",
 	f = function(message, parameters, category)
@@ -5663,8 +5654,10 @@ commands["public"] = {
 			end
 		end
 	end
-}
-commands["staff"] = {
+}]]
+
+--[[ staff → commands/staff/staff.lua ]]
+--[[commands["staff"] = {
 	auth = permissions.is_owner,
 	description = "Sets a member as a staff in the #module category.",
 	f = function(message, parameters, category)
@@ -5721,9 +5714,10 @@ commands["staff"] = {
 			sendError(message, "STAFF", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
+}]]
 	-- Module team]]
-commands["delgcmd"] = {
+--[[ delgcmd → commands/staff/delgcmd.lua ]]
+--[[commands["delgcmd"] = {
 	auth = permissions.is_dev,
 	description = "Deletes a global command created by you.",
 	f = function(message, parameters, category)
@@ -5767,8 +5761,10 @@ commands["delgcmd"] = {
 			sendError(message, "DELGCMD", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
-commands["emoji"] = {
+}]]
+
+--[[ emoji → commands/staff/emoji.lua ]]
+--[[commands["emoji"] = {
 	auth = permissions.is_module,
 	description = "Creates an emoji in the server.",
 	f = function(message, parameters)
@@ -5823,8 +5819,10 @@ commands["emoji"] = {
 			sendError(message, "EMOJI", "Invalid or missing image attachment.")
 		end
 	end
-}
-commands["galias"] = {
+}]]
+
+--[[ galias → commands/staff/galias.lua ]]
+--[[commands["galias"] = {
 	auth = permissions.is_module,
 	description = "Creates an alias for a global command.",
 	f = function(message, parameters)
@@ -5866,8 +5864,10 @@ commands["galias"] = {
 			sendError(message, "GALIAS", "Invalid or missing parameters.", "Use `!galias command alias`")
 		end
 	end
-}
-commands["gcmd"] = {
+}]]
+
+--[[ gcmd → commands/staff/gcmd.lua ]]
+--[[commands["gcmd"] = {
 	auth = permissions.is_dev,
 	description = "Creates a command in the global categories.",
 	f = function(message, parameters)
@@ -5952,8 +5952,7 @@ commands["gcmd"] = {
 			sendError(message, "GCMD", "Invalid or missing parameters.", syntax)
 		end
 	end
-}
---[=[commands["module"] = {
+}]]--[=[commands["module"] = {
 	auth = permissions.is_module,
 	description = "Creates a module category",
 	f = function(message, parameters)
