@@ -38,6 +38,7 @@ return function(ctx)
 			end
 
 			table.insert(quoteTargets, targetData)
+			ctx.save("quoteTargets", quoteTargets)
 
 			message:reply({
 				embed = {
@@ -46,6 +47,7 @@ return function(ctx)
 					color = config.color.sys
 				}
 			})
+			message:delete()
 		end
 	}
 end

@@ -3225,7 +3225,6 @@ commands["ping"] = commands["conn"]
 	end
 }]]
 --[[ activity → commands/public/activity.lua ]]
-}]]
 --[[commands["adoc"] = {
 	auth = permissions.public,
 	description = "Gets information about a specific tfm api function.",
@@ -3453,7 +3452,6 @@ commands["ping"] = commands["conn"]
 		end
 	end
 }]]
-]]
 --[[ avatar, coin, color, conn → commands/public/ ]]
 --[[ doc → commands/public/doc.lua ]]
 --[=[commands["modules"] = {
@@ -3622,46 +3620,6 @@ commands["ping"] = commands["conn"]
 }]=]
 --[[ timezone → commands/public/timezone.lua ]]
 --[[ topic → commands/public/topic.lua ]]
-		if type(src) == "table" then
-			local counter = 0
-			for k, v in next, src do
-				counter = counter + 1
-				sortedSrc[counter] = { k, tostring(v), type(v) }
-			end
-		else
-			sortedSrc[1] = { tostring(indexName), tostring(src), type(src) }
-		end
-		table.sort(sortedSrc, function(value1, value2)
-			if value1[3] == "number" and value2[3] == "number" then
-				value1 = tonumber(value1[2])
-				value2 = tonumber(value2[2])
-			else
-				value1 = value1[1]
-				value2 = value2[1]
-			end
-
-			return value1 < value2
-		end)
-
-		local lines = splitByLine(concat(sortedSrc, "\n", function(index, value)
-			return "`" .. value[3] .. "` **" .. value[1] .. "** : `" .. value[2] .. "`"
-		end))
-
-		local msgs = { }
-		for line = 1, #lines do
-			msgs[line] = message:reply({
-				content = (line == 1 and "<@!" .. message.author.id .. ">" or nil),
-				embed = {
-					color = color.atelier801,
-					title = (line == 1 and "<:wheel:456198795768889344> " .. (parameters and ("'" .. parameters .. "' ") or '') .. "Tree" or nil),
-					description = lines[line]
-				}
-			})
-		end
-
-		toDelete[message.id] = msgs
-	end
-}]=]
 --[[ translate → commands/public/translate.lua ]]
 --[=[commands["xml"] = {
 	auth = permissions.public,
@@ -3803,13 +3761,8 @@ local wrapMessageObject = function(message)
 		isDM = message.channel.type == 1,
 		mentionsEveryone = message.mentionsEveryone,
 		oldContent = message.oldContent,
-				end
-			end
-		else
-			sendError(message, message_author.name .. ".Lua", "Invalid or missing parameters.", syntax)
-		end
-	end
-}
+	}
+end
 	-- Module owner
 --[[commands["delcmd"] = {
 	auth = permissions.is_owner,
@@ -4231,6 +4184,25 @@ channelBehavior["polls"] = {
 channelBehavior["greetings"] = {
 	f = function(message)
 		message.channel:setTopic("Messages: " .. message.channel:getMessages(100):count() .. " / 100")
+	end
+}
+channelBehavior["honeypot"] = {
+	f = function(message)
+		local report = commands["report"].f(
+			message,
+			message.id .. " HONEYPOT!",
+			true
+		)
+		if not report then
+			error("Honeypot failed for message " .. message.id)
+		end
+		channelReactionBehavior["report"].f_Add(
+			report,
+			report.channel,
+			reactions.bomb,
+			client.user.id,
+			true
+		)
 	end
 }
 
@@ -4726,6 +4698,16 @@ local function _inPlace(dest, src)
 	return dest
 end
 
+local checkHoneypotChannel = function()
+	local channel = client:getGuild(channels["guild"]):getChannel(channels["honeypot"])
+
+	for message in channel:getMessages():iter() do
+		if message.author.id ~= client.user.id then
+			channelBehavior["honeypot"].f(message)
+		end
+	end
+end
+
 --[[ Events ]]--
 client:on("ready", function()
 	_inPlace(modules, {})--TRY_REQUEST("serverModulesData", false, true)
@@ -4805,6 +4787,7 @@ client:on("ready", function()
 
 			channelBehavior = channelBehavior,
 			channelReactionBehavior = channelReactionBehavior,
+			checkHoneypotChannel = checkHoneypotChannel,
 			client = client,
 			cmdData = cmdData,
 			commands = commands,
@@ -4925,6 +4908,7 @@ client:on("ready", function()
 	end
 
 	log("INFO", "Running as '" .. client.user.name .. "'", logColor.green)
+	throwError(nil, "checkHoneypotChannel", checkHoneypotChannel)
 	throwError(nil, "RetriggerGamesCommands", retriggerGamesCommands)
 end)
 

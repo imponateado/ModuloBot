@@ -10,10 +10,12 @@ return function(ctx)
 	return {
 		auth = config.permissions.public,
 		description = "Reports a message.",
-		f = function(message, parameters)
+		f = function(message, parameters, isHoneypot)
 			local syntax = "To report a message, please make sure that your developer mode on discord is enabled. Use the command `!report message_id report_reason`"
 
-			message:delete()
+			if not isHoneypot then
+				message:delete()
+			end
 			if parameters and #parameters > 0 then
 				local msg, reason = string.match(parameters, "^(%d+)[\n ]+(.+)$")
 
@@ -26,8 +28,10 @@ return function(ctx)
 						embed.author = nil
 						embed.fields = nil
 
+						local reporterName = isHoneypot and ("**HONEYPOT** <#" .. channels["honeypot"] .. ">") or ("**" .. message.member.name .. "** <@" .. message.member.id .. ">")
+
 						local report = client:getChannel(channels["report"]):send({
-							content = "Message from **" .. (msg.member or msg.author).name .. "** <@" .. msg.author.id .. ">\nReported by: **" .. message.member.name .. "** <@" .. message.member.id .. ">\n\nSource: <" .. msg.link .. "> | Reason:\n```\n" .. tostring(reason) .. "```",
+							content = "Message from **" .. (msg.member or msg.author).name .. "** <@" .. msg.author.id .. ">\nReported by: " .. reporterName .. "\n\nSource: <" .. msg.link .. "> | Reason:\n```\n" .. tostring(reason) .. "```",
 							embed = embed
 						})
 
@@ -35,6 +39,8 @@ return function(ctx)
 						report:addReaction(reactions.bomb)
 						report:addReaction(reactions.boot)
 						report:addReaction(reactions.x)
+
+						return report
 					else
 						message.author:send({ embed = { color = color.err, title = "<:ban:504779866919403520> Report", description = "Invalid message. " .. syntax } })
 					end

@@ -211,7 +211,7 @@ return function(ctx)
 
 					title = (p.data.gender and (p.data.gender == 0 and "<:male:456193580155928588> " or "<:female:456193579308679169> ") or "") .. p.discord.name .. icon,
 
-					description = (p.data.status and "`"" .. p.data.status .. ""` - " or "") .. "<@" .. p.discord.id .. ">",
+					description = (p.data.status and "`“" .. p.data.status .. "”` - " or "") .. "<@" .. p.discord.id .. ">",
 
 					fields = fields
 				}
